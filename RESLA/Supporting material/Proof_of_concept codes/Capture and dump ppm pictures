@@ -1,0 +1,76 @@
+#include <pthread.h>
+#include <semaphore.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/ml/ml.hpp>
+#include "opencv2/core.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/objdetect/detection_based_tracker.hpp"
+#include "opencv2/objdetect/objdetect_c.h"
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <opencv2/core/ocl.hpp>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <iterator>
+#include <fcntl.h>
+#include <termios.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+CvCapture* capture;
+int main()
+{
+	using namespace cv;
+	using namespace std;
+	capture = (CvCapture *)cvCreateCameraCapture(0);
+	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 640);
+	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
+	IplImage* frame;
+
+	string str_inter,str_outer ;
+	ostringstream inter_convert,outer_convert;   // stream used for the conversion
+
+for(int outer=0;outer<=10;outer++){
+	for(int inter=0;inter<=29;inter++){
+
+		inter_convert << inter;
+		str_inter = inter_convert.str();
+		outer_convert << outer;
+		str_outer = outer_convert.str();
+		while(1){
+
+				frame=cvQueryFrame(capture);
+
+				if ( !frame ) {
+				printf("ERROR FRAME \n\r");
+				}
+				cvShowImage( "mywindow", frame );
+				if ( (cvWaitKey(10) & 255) == 's' )
+				{
+					CvSize size = cvGetSize(frame);
+					IplImage* img= cvCreateImage(size, IPL_DEPTH_16S, 1);
+					img = frame;
+					string imagen="/home/praveen/Desktop/Stop/000"+((outer<=9)?("0"+str_outer):(str_outer))+"_000"+((inter<=9)?("0"+str_inter):(str_inter))+".ppm";
+					cvSaveImage(imagen.c_str(),img);
+				    inter_convert.str(std::string());
+				    outer_convert.str(std::string());
+
+					printf("SAVED\n\r");
+					break;
+				}
+			}
+		}
+		if ( (cvWaitKey(10) & 255) == 27 ) break;
+
+	}
+	return 0;
+}
+

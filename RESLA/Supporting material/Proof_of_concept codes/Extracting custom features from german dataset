@@ -1,0 +1,94 @@
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/ml/ml.hpp>
+#include "opencv2/core.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/objdetect/detection_based_tracker.hpp"
+#include "opencv2/objdetect/objdetect_c.h"
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <iterator>
+
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+
+using namespace cv;
+using namespace std;
+string imageName("/home/praveen/Desktop/RTES project/german dataset/GTSRB/Final_Training/Images/");
+
+
+int main( int argc, char** argv )
+{
+
+	ifstream myfile;
+	HOGDescriptor hog;//(Size(40,40),Size(10,10),Size(5,5),Size(5,5),8,1,-1,0,0.2,false,64,true);
+	vector<float> featureVector;
+	vector<Point> locations;
+	hog.winSize = Size(40, 40);
+	hog.cellSize=Size(5,5);
+	hog.blockSize=Size(10,10);
+	hog.blockStride=Size(5,5);
+	hog.nbins=8;
+
+//	hog.derivAperture=1;
+	hog.winSigma= 4;
+	hog.histogramNormType=0;
+	hog.L2HysThreshold=2.0000000000000001e-01;
+//	hog.gammaCorrection=false;
+//	hog.nlevels=128;
+//	hog.signedGradient =true;
+	string str_inter,str_outer ;
+	ostringstream inter_convert,outer_convert;   // stream used for the conversion
+for(int outer=0;outer<=18;outer++){
+	for(int inter=0;inter<=29;inter++){
+
+		inter_convert << inter;
+		str_inter = inter_convert.str();
+		outer_convert << outer;
+		str_outer = outer_convert.str();
+
+	string path = imageName+"00034_LEFT/000"+((outer<=9)?("0"+str_outer):(str_outer))+"_000"+((inter<=9)?("0"+str_inter):(str_inter))+".ppm";
+
+	   Mat image;
+	    image = imread(path.c_str(), CV_LOAD_IMAGE_COLOR);   // Read the file
+
+	    resize(image,image,Size(40,40),0,0,INTER_LINEAR);
+
+	    if(! image.data )                              // Check for invalid input
+	    {
+	        cout <<  "Could not open or find the image" << std::endl ;
+	        return -1;
+	    }
+
+    hog.compute(image,featureVector,Size(5,5),Size(1,1),locations);
+//    featureVector[1568]=0;
+//   string textname("/home/praveen/Desktop/RTES project/Custom/"+"00014/000"+((outer<=9)?("0"+str_outer):(str_outer))+"_000"+((inter<=9)?("0"+str_inter):(str_inter))+".txt");
+    string textname("/home/praveen/Desktop/RTES project/Custom/00034/000"+((outer<=9)?("0"+str_outer):(str_outer))+"_000"+((inter<=9)?("0"+str_inter):(str_inter))+".txt");
+
+    std::ofstream f(textname.c_str());
+    copy(featureVector.begin(), featureVector.end(), ostream_iterator<float> (f,"\n"));
+
+    inter_convert.str(std::string());
+    outer_convert.str(std::string());
+	}
+}
+//    for(int i=0; i<=featureVector.size(); ++i)
+//      std::cout <<"Numbe "<< i<< " is " <<featureVector[i] << "\n ";
+//    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+//    imshow( "Display window", image );                   // Show our image inside it.
+
+
+//    waitKey(0);                                          // Wait for a keystroke in the window
+    return 0;
+}
+

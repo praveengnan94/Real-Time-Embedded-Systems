@@ -1,0 +1,151 @@
+//ARDUINO CODE FOR RESLA- AN AUTONOMOUS DRIVING BOT
+//AUTHORS: PRAVEEN GNANASEKARAN, RISHABH BERLIA
+char dat;
+// defines pins numbers
+const int trigPin = 9;
+const int echoPin = 10;
+const int left_ir=4;
+const int right_ir=5;
+long duration;
+int distance;
+//COUNTER CLOCKWISE AND CLOCKWISE MOTIONS FOR THE MOTORS
+#define CCW  1
+#define CW 0
+// Motor definitions FOR TWO MOTORS
+#define MOTOR_A 0
+#define MOTOR_B 1
+// ANALOG 0 TO READ IR SENSOR IN THE LINE FOLLOWER
+#define center_ir A0
+// Pin Assignments //
+// Don't change these! These pins are statically defined by shield layout
+const byte PWMA = 3;  // PWM control (speed) for motor A
+const byte PWMB = 11; // PWM control (speed) for motor B
+const byte DIRA = 12; // Direction control for motor A
+const byte DIRB = 13; // Direction control for motor B
+//SHARP DISTANCE MEASUREMENT SENSOR
+#define SHARP A3
+int turn_left_flag,turn_right_flag;
+int repeat= 1;
+int centre_white=921,centre_black=992 ;
+//MOTOR PWM VALUES
+#define PWM 50
+#define SIDE_PWM PWM
+//FUNCTION TO MOVE THE MOTORS RIGHT
+void right() {
+   
+//   driveArdumoto(MOTOR_A, CW, 54);  / / Motor A at max speed.
+for( int i=0;i<repeat;i++)
+   driveArdumoto(MOTOR_A, CCW, SIDE_PWM);  // Motor B at max speed.
+}
+void stopArdumoto(byte motor)
+{
+  driveArdumoto(motor, 0, 0);
+}
+//STOP FUNCTION TO STOP THE MOTORS
+void Stop () {
+ 
+  stopArdumoto(MOTOR_B);
+  stopArdumoto(MOTOR_A);
+}
+//TO MOVE LEFT
+void left() {
+for( int i=0;i<repeat;i++)   
+   driveArdumoto(MOTOR_B, CCW, SIDE_PWM);  // Motor A at max speed.
+//   driveArdumoto(MOTOR_B, CW, SIDE_PWM);  // Motor B at max speed.
+}
+//TO MOVE FORWARD
+void forward() {
+for(int i=0;i<repeat;i++){
+   driveArdumoto(MOTOR_A, CCW, PWM);  // Motor A at max speed.
+   driveArdumoto(MOTOR_B, CCW, PWM);  // Motor B at max speed.
+}
+}
+void setup() {
+  // put your setup code here, to run once:
+    setupArdumoto(); // Set all pins as outputs
+pinMode(left_ir,INPUT);
+pinMode(right_ir,INPUT);
+  Serial.begin(9600);
+}
+void loop() {
+  //U(85) ultrasonic , F(70) MOVE FORWARD, S(83) STOP, P(80) PATH DETECTOR, L(76) TURN LEFT, R(82) TURN RIGHT
+  if(Serial.available()>0) //If data is avaiable to read on the serial port.
+  {
+   dat=Serial.read();
+ if(dat==85)  //ULTRASONIC
+   {
+// SEND ULTRASONIC VALUE TO JETSON SO THAT IT CAN MAKE AN INFORMED DECISION
+    Serial.println(analogRead(SHARP));
+    dat=0;
+   }
+   else if(dat==70) //MOVE FORWARD FOR ONE CYCLE
+   {
+      //send pwm control for one cycle so that bot moves forward by one step
+      if((turn_left_flag==0)&&(turn_right_flag==0)){
+        driveArdumoto(MOTOR_A, CCW, PWM);  // Motor A at max speed.
+        driveArdumoto(MOTOR_B, CCW, PWM);  // Motor B at max speed.
+        delay(300);
+        Stop();
+      }
+       dat=0;
+      Serial.print("F");     
+   }
+      else if (dat==82)// IF  A RIGHT COMMAND IS RECEIVED CORRESPONDING TO THE CHARACTER R
+   {
+    right();
+    delay(300);
+    turn_right_flag=1;
+    Stop();
+    dat=0;
+    Serial.print("R");    
+   }
+   else if (dat==76)  //IF A LEFT COMMAND IS RECEIVED CORRESPONDING TO THE CHARACTER L
+   {
+    left();
+    delay(300);
+    Stop();
+    turn_left_flag=1;
+    dat=0;
+    Serial.print("L");
+    
+   }
+   else if(dat==83)//stop motor CORRESPONDING TO RECEIVING S CHARACTER
+   {
+    // stopArdumoto makes a motor stop
+    Stop();
+     dat=0;
+     Serial.print("S");
+    
+   }
+  }
+ 
+}
+// setupArdumoto initialize all pins; CODE OBTAINED FROM SPARKFUN WEBSITE
+void setupArdumoto()
+{
+  // All pins should be setup as outputs:
+  pinMode(PWMA, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(DIRA, OUTPUT);
+  pinMode(DIRB, OUTPUT);
+  
+  // Initialize all pins as low:
+  digitalWrite(PWMA, LOW);
+  digitalWrite(PWMB, LOW);
+  digitalWrite(DIRA, LOW);
+  digitalWrite(DIRB, LOW);
+}
+// driveArdumoto drives 'motor' in 'dir' direction at 'spd' speed
+void driveArdumoto(byte motor, byte dir, byte spd)
+{
+  if (motor == MOTOR_A)
+  {
+    digitalWrite(DIRA, dir);
+    analogWrite(PWMA, spd);
+  }
+  else if (motor == MOTOR_B)
+  {
+    digitalWrite(DIRB, dir);
+    analogWrite(PWMB, spd);
+  }  
+}
